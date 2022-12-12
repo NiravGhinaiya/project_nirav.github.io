@@ -1,0 +1,270 @@
+// ---> ( main.js )
+
+import React, { useEffect, useRef, useState } from 'react'
+import './style.css'
+
+const getLocalStorage = () => {
+    let list = localStorage.getItem('Item');
+
+    if (list) {
+        return JSON.parse(localStorage.getItem('Item'));
+    } else {
+        return [];
+    }
+}
+
+const Todo = () => {
+
+    const [inputData, setInputData] = useState('');
+    const [items, setItems] = useState(getLocalStorage())
+    const [toggleSubmit, setToggleSubmit] = useState(true);
+    const [editItem, setEditItem] = useState(null);
+
+    const inputRef = useRef();
+    const searchVal = useRef();
+
+
+    useEffect(() => {
+        localStorage.setItem('Item', JSON.stringify(items))
+    }, [items])
+
+    useEffect(() => {
+        let check = items.map((curEle) => {
+            return { ...curEle, isSelect: false }
+        })
+        setItems(check);
+    }, [])
+
+
+    const heandleClick = () => {
+        if (!inputData) {
+            alert('Plz Fil Input Fild')
+        } else if (inputData && !toggleSubmit) {
+            setItems(
+                items.map((val) => {
+                    if (val.id === editItem) {
+                        return { ...val, name: inputData }
+                    }
+                    return val;
+                })
+            )
+            setToggleSubmit(true);
+            setInputData('');
+            setEditItem(null);
+        } else {
+            const idata = { id: new Date().getTime().toString(), name: inputData, isSelect: false }
+            setItems([...items, idata])
+            setInputData('')
+        }
+    }
+
+    //---->  Delete Item
+    const itemDelete = (index) => {
+        console.log(index, 'index')
+        setItems((arr) => {
+            return arr.filter((arrEle) => {
+                return index !== arrEle.id;
+            })
+        })
+    }
+
+    //---->  Edit Item
+    const itemEdit = (id) => {
+        let newItemEdit = items.find((ele) => {
+            return ele.id === id;
+        });
+        setToggleSubmit(false);
+        setInputData(newItemEdit.name);
+        setEditItem(id);
+        inputRef.current.focus();
+    }
+
+    //---->  Remove all Items
+    const removeAll = () => {
+        setItems([])
+    }
+
+    //-----> Input Check
+    const inputCheck = (id) => {
+        // console.log(e,'checked')
+        let isChecked = items.map((curEle) => {
+            return curEle.id === id ? curEle.isSelect === true ? { ...curEle, isSelect: false } : { ...curEle, isSelect: true } : curEle
+        })
+        setItems(isChecked);
+    }
+
+    //----> Check Remove
+    const checkRemove = () => {
+        setItems((arr) => {
+            return arr.filter((arrEle) => {
+                return true !== arrEle.isSelect;
+            })
+        })
+    }
+
+    //-----> Select All Check
+    const selectAllcheck = (ck) => {
+        // console.log(ck,'ck')
+        let selectAll = items.map((curEle) => {
+            return ck === true ? { ...curEle, isSelect: true } : { ...curEle, isSelect: false }
+        })
+        setItems(selectAll);
+    }
+
+    // ----> Search Data
+    const searchData = (e) => {
+        let data = e.target.value;
+        items.forEach((curEle) => {
+            let fData = curEle.name;
+            if (fData.match(data)) {
+                console.log(curEle, 'data')
+            }
+        })
+    }
+
+    return (
+        <>
+            <h1>Todo List</h1>
+            <div className='main-body'>
+                <div className='first-sec'>
+                    <input type='text' placeholder='Add Item...' ref={inputRef} value={inputData} onChange={(e) => setInputData(e.target.value)} />
+                    {
+                        <button onClick={heandleClick}> {toggleSubmit ? 'Add' : 'Update'} </button>
+                        /* toggleSubmit ? <button onClick={heandleClick}>Add</button> : <button onClick={heandleClick}>Update</button> */
+                    }
+                </div>
+                <div className='midel-sec'>
+                    <div className='midel-f-sec'>
+                        <input type='checkbox' onChange={(e) => { selectAllcheck(e.target.checked); console.log(e.target.checked, 'e.target.checked') }} /> Select All
+                        <input type='text' id='myInput' onChange={searchData} placeholder='Search ...' ref={searchVal} />
+                    </div>
+                    <div>
+                        <ul id='myUl'>
+                            {
+                                items.map((item, index) => {
+                                    return (
+                                        <li key={index} >
+                                            <p>
+                                                <input type='checkbox' checked={item.isSelect} onChange={() => inputCheck(item.id)} value={item.name} id={item.id} />
+                                                {item.name}
+                                            </p>
+                                            <button onClick={() => itemEdit(item.id)}>Edit</button>
+                                            <button onClick={() => itemDelete(item.id)}>Delete</button>
+                                        </li>
+                                    )
+                                })
+                            }
+                        </ul>
+                    </div>
+                </div>
+                <div className='last-sec'>
+                    <button onClick={removeAll}>Remove List</button>
+                    <button onClick={checkRemove}>Check Data Remove</button>
+                </div>
+            </div>
+        </>
+    )
+}
+
+export default Todo
+
+
+// ---> ( style.css )
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+h1{
+    text-align: center;
+    font-size: 40px;
+    padding: 20px 0;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    letter-spacing: 5px;
+    text-shadow: 4px 4px 3px black;
+    color: #fff;
+    background-color: rgba(10,10,10,0.20);
+}
+
+.main-body{
+    text-align: center;
+    /* height: 100vh; */
+    padding-top: 40px;
+}
+
+.first-sec {
+    padding-bottom: 40px;
+}
+
+.first-sec input{
+    /* background-color: whitesmoke; */
+    width: 25%;
+    padding: 5px 8px;
+    margin-right: 1%;
+}
+
+.first-sec button{
+    width: 9%;
+    padding: 5px 8px;
+}
+
+.midel-f-sec{
+    margin-left: 32.33%;
+    text-align: left;
+    margin-bottom: 2%;
+}
+
+.midel-f-sec input{
+    text-align: left;
+}
+
+
+.midel-f-sec #myInput{
+    padding: 5px 8px;
+    margin-left: 3%;
+    width: 40%;
+}
+
+.midel-sec .midel-f-sec button{
+    width: 9%;
+    margin-left: 30.5%;
+    padding: 5px 8px;
+}
+
+.midel-sec ul{
+    list-style-type: none;
+    margin-left: 32.33%;
+}
+
+.midel-sec li{
+    display: flex;
+    padding: 4px 0;
+    margin-bottom: 2%;
+}
+
+
+.midel-sec p{
+    width: 30%;
+    text-align: left;
+    padding: 5px 8px;
+    border: 1px solid;
+}
+
+.midel-sec p input{
+    margin-right: 5%;
+}
+
+.midel-sec ul button{
+    width: 9%;
+    margin-left: 2%;
+    padding: 5px 8px;
+}
+
+.last-sec button{
+    /* width: 10%; */
+    margin-top: 2%;
+    margin-left: 2%;
+    padding: 9px 20px;
+}
