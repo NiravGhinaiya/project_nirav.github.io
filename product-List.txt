@@ -1,0 +1,606 @@
+//------------------------------------------------------------------------
+npm i antd
+npm i react-bootstrap
+npm i @mui/material @emotion/react @emotion/styled
+npm i @mui/icons-material
+npm i @ant-design/icons
+
+
+// --------------( product.js )-----------------------------------------
+
+import React from 'react';
+import { Layout } from 'antd';
+import ProductList from './ProductList'
+
+const { Header, Content } = Layout;
+
+
+const product = () => {
+
+    return (
+        <Layout className='layout' >
+            <Header style={{height:'100%'}}>
+                <h1 style={{
+                    color: '#fff'
+                }}>Logo...</h1>
+            </Header>
+            <Content style={{ backgroundColor: 'rgba(1,1,1,0.01)', height:'100%' }}>
+                <ProductList />
+            </Content>
+        </Layout>
+    )
+}
+
+export default product
+
+
+//---------------------( Formres.js )------------------------------------------------------------
+
+import { Button, Form, Input, Select, Space, Upload, message } from 'antd'
+import TextArea from 'antd/es/input/TextArea';
+import React, { useEffect, useState } from 'react'
+import { PlusOutlined } from '@ant-design/icons';
+const { Option } = Select
+
+
+
+
+const getBase64 = (img, callback) => {
+    const reader = new FileReader();
+    reader.addEventListener('load', () => callback(reader.result));
+    reader.readAsDataURL(img);
+};
+const beforeUpload = (file) => {
+    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+    if (!isJpgOrPng) {
+        message.error('You can only upload JPG/PNG file!');
+    }
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isLt2M) {
+        message.error('Image must smaller than 2MB!');
+    }
+    return isJpgOrPng && isLt2M;
+};
+
+
+const Formres = ({ editData, setStats, setToggleForm, editToggle,setImageUrl, imageUrl }) => {
+
+    const [record, setRecord] = useState(localStorage.getItem('List') ? JSON.parse(localStorage.getItem('List')) : [])
+    const [loading, setLoading] = useState(false);
+    
+
+    // const [fileList, setFileList] = useState([]);
+
+    const [form] = Form.useForm();
+
+    const [dataForm, setDataForm] = useState({
+        productName: '',
+        Description: "",
+        Price: '',
+        Discount: '',
+        stats: '',
+        upload: ''
+    })
+
+
+
+    useEffect(() => {
+        form.resetFields();
+        setDataForm(editData)
+    }, [editData])
+
+
+    const handleChange = (e) => {
+        setDataForm({ ...dataForm, [e.target.name]: e.target.value })
+    }
+
+
+    const handleChangeSelect = (e) => {
+        setDataForm({ ...dataForm, stats: e })
+    }
+
+
+    const onFinishForm = (data) => {
+
+        if (editToggle === true) {
+            const inx = record.findIndex((e) => e.id === editData.id)
+            let prestate = record
+            prestate[inx] = { ...dataForm, upload: imageUrl }
+            setRecord(prestate)
+            localStorage.setItem('List', JSON.stringify(prestate))
+        } else {
+            let id = new Date().getTime().toString();
+            let temp = [...record, { id, ...data, upload: imageUrl }]
+            setRecord(temp);
+            localStorage.setItem('List', JSON.stringify(temp))
+        }
+
+        setStats(true)
+        setToggleForm(false)
+        form.resetFields();
+        setImageUrl()
+    }
+
+    // console.log('record record', record)
+
+
+    const handleChangeS = (info) => {
+        if (info.file.status === 'uploading') {
+            setLoading(true);
+            return;
+        }
+        if (info.file.status === 'done') {
+            // Get this url from response in real world.
+            getBase64(info.file.originFileObj, (url) => {
+                setLoading(false);
+                setImageUrl(url);
+            });
+        }
+    };
+    const uploadButton = (
+        <div>
+            {loading && <PlusOutlined />}
+            <div style={{ marginTop: 8, }}>
+                Upload
+            </div>
+        </div>
+    );
+
+
+
+    return (
+        <>
+            <Form onFinish={onFinishForm} form={form} style={{
+                right: '8px',
+                padding: '10px',
+                position: 'absolute',
+                width: '95%',
+            }} >
+                <Form.Item >
+                    <div >
+                        <h1 style={{ fontSize: '40px', margin: '0' }}>Form</h1>
+                    </div>
+                </Form.Item>
+
+                <Form.Item name='productName'
+                    rules={[{
+                        required: true,
+                        message: '* Enter Product Name'
+                    }, {
+                        pattern: /^[a-zA-Z]{2,20}$/,
+                        message: '* Enter Product Name'
+                    }]} >
+                    <Input placeholder='Product Name' autoComplete='off' name='productName' defaultValue={editData.productName} onChange={handleChange} />
+                </Form.Item>
+
+                <Form.Item name='Description'
+                    rules={[{
+                        required: true,
+                        message: '* Enter Description'
+                    }, {
+                        pattern: /^[A-z0-9!@#$%^&*(). '",\n]{5,100}$/,
+                        message: "* Enter Minimum 5 and Maximum 100 letter's allow"
+                    }]} >
+                    <TextArea placeholder='Description' autoComplete='off' name='Description' rows={3} defaultValue={editData.Description} onChange={handleChange} />
+                </Form.Item>
+
+                <Form.Item name='Price'
+                    rules={[{
+                        required: true,
+                        message: '* Enter Price'
+                    }, {
+                        pattern: /^(?=.*[0-9])[0-9]{1,6}$/,
+                        message: '* Enter Valid Price'
+                    }]} >
+                    <Input placeholder='Price' autoComplete='off' name='Price' defaultValue={editData.Price} onChange={handleChange} />
+                </Form.Item>
+
+                <Form.Item name='Discount'
+                    rules={[{
+                        required: true,
+                        message: '* Enter Discount'
+                    }, {
+                        pattern: /^(?=.*[0-9])[0-9]{1,2}$/,
+                        message: '* Enter Discount Number'
+                    }]} >
+                    <Input placeholder='Discount' autoComplete='off' name='Discount' defaultValue={editData.Discount} onChange={handleChange} />
+                </Form.Item>
+
+                <Form.Item name='stats'
+                    rules={[{
+                        required: true,
+                        message: '* Enter Product Stats'
+                    }]}
+
+                >
+                    <Select placeholder='Select Stats' defaultValue={editData.stats} onChange={handleChangeSelect}>
+                        <Option value="avaible">avaible</Option>
+                        <Option value="not-avaible">not-avaible</Option>
+                    </Select>
+                </Form.Item>
+
+                <Form.Item name="upload" rules={[{
+                    required: true,
+                    message: 'Upload Product Image'
+                }]}  >
+                    <Upload
+                        name="avatar"
+                        listType="picture-card"
+                        className="avatar-uploader"
+                        showUploadList={false}
+                        action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+                        beforeUpload={beforeUpload}
+                        onChange={handleChangeS}
+                        value={editData.upload}
+                    >
+                        {imageUrl ? (<img src={imageUrl} alt="avatar" style={{ width: '100%' }} />) : (uploadButton)}
+                    </Upload>
+                </Form.Item>
+
+                <Form.Item style={{ marginTop: '10%', justifyContent: 'center', display: 'flex' }}>
+                    <Space size={20}>
+                        <Button type='default' htmlType='button' style={{ width: '130px' }} onClick={() => {
+                            // form.resetFields();
+                            setToggleForm(false)
+                        }}>Cancel</Button>
+                        <Button type='primary' htmlType='submit' style={{ width: '130px' }} >Save</Button>
+                    </Space>
+                </Form.Item>
+            </Form>
+        </>
+    )
+}
+
+export default Formres;
+
+//-------------------------------( ProductList.js )-----------------------------------------------------------------
+
+import { Col, Row, Button, Input, Drawer, Modal, Table, Space, Checkbox } from 'antd'
+import { CloseOutlined, PrinterOutlined, SettingOutlined, PlusOutlined, DeleteTwoTone, EditTwoTone } from '@ant-design/icons';
+import { SearchOutlined } from '@mui/icons-material'
+import React, { useState } from 'react'
+import Formres from './Formres';
+import { useEffect } from 'react';
+
+
+const { confirm } = Modal;
+
+
+const ProductList = () => {
+
+    const [toggleForm, setToggleForm] = useState(false);
+    const [toggleSetting, setToggleSetting] = useState(false);
+    const [recordList, setRecordList] = useState(JSON.parse(localStorage.getItem('List')))
+    const [stats, setStats] = useState(false)
+    const [checkedBox, setCheckedBox] = useState(['id', 'productName', 'Description', 'upload', 'Price', 'Discount', 'stats', 'Action'])
+    const [editToggle, setEditToggle] = useState(false)
+    const [editData, setEditData] = useState({})
+    const [val, setVal] = useState('')
+    const [checkData, setCheckData] = useState([])
+
+    const [imageUrl, setImageUrl] = useState();
+
+    useEffect(() => {
+        setRecordList(JSON.parse(localStorage.getItem('List')))
+    }, [stats])
+
+    // console.log('recordList', recordList)
+    // const localData = JSON.parse(localStorage.getItem('List'))
+
+    const toggleFormClick = () => {
+        setToggleForm(true)
+    }
+
+    const editRecod = (val) => {
+        setToggleForm(true);
+        setEditToggle(true)
+        // setEditData(val)
+        // console.log(val, 'val')
+        setEditData(val);
+        setImageUrl(val.upload)
+
+    }
+
+    // Delete record
+    const deleteRecord = (id) => {
+        confirm({
+            title: 'Are you sure delete this Project ?',
+            icon: <span style={{ backgroundColor: 'rgb(243 221 221)', padding: '21px 21px 16px', borderRadius: '50px', margin: '10px 0 20px  40%', color: 'red' }}> <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" className="bi bi-trash" viewBox="0 0 16 16">
+                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
+                <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
+            </svg>
+            </span>,
+            okText: 'Delete',
+            okType: 'danger',
+            cancelText: 'Cancel',
+            onOk() {
+                const fielRecord = recordList.filter((ele) => {
+                    return ele.id !== id;
+                })
+                setRecordList(fielRecord)
+                localStorage.setItem('List', JSON.stringify(fielRecord))
+            },
+            onCancel() {
+                // console.log('Cancel');
+            },
+        });
+
+    }
+
+
+    const settingToggle = () => {
+        setToggleSetting(true)
+    }
+
+    const onChange = (checkedValues) => {
+        // console.log('checked = ', checkedValues);
+        setCheckData(checkedValues)
+    };
+
+
+
+    const columns = [
+        {
+            key: '1',
+            title: 'Id',
+            dataIndex: 'id',
+            width: 100,
+            align: 'center',
+            render: (obj, arr, index) => {
+                return index + 1
+            }
+        },
+        {
+            key: '2',
+            title: 'Product Name',
+            dataIndex: 'productName',
+            align: 'center'
+        },
+        {
+            key: '3',
+            title: 'Description',
+            align: 'center',
+            width: '300px',
+            dataIndex: 'Description',
+        },
+        {
+            key: '4',
+            title: 'Product Image',
+            align: 'center',
+            dataIndex: 'upload',
+            render: (obj) => (
+                <img src={obj} alt='Img' style={{
+                    width: '40px', height: '40px', borderRadius: '50%'
+                }} />
+            )
+        },
+        {
+            key: '5',
+            align: 'center',
+            title: 'Price',
+            dataIndex: 'Price',
+            render: (obj) => '₹ ' + obj
+        },
+        {
+            key: '6',
+            title: 'Disscount',
+            align: 'center',
+            dataIndex: 'Discount',
+            render: (obj) => obj + '%'
+        },
+        {
+            key: '7',
+            align: 'center',
+            title: 'Availalble',
+            dataIndex: "stats",
+            render: (obj) => {
+                // return console.log('obj',obj)
+                return (
+                    obj === 'avaible'
+                        ? <svg color='#008000b5' xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" className="bi bi-record-fill" viewBox="0 0 16 16">
+                            <path fillRule="evenodd" d="M8 13A5 5 0 1 0 8 3a5 5 0 0 0 0 10z" /></svg>
+                        : <svg color='rgb(255 95 95)' xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" className="bi bi-record-fill" viewBox="0 0 16 16">
+                            <path fillRule="evenodd" d="M8 13A5 5 0 1 0 8 3a5 5 0 0 0 0 10z" /></svg>
+                )
+            }
+        },
+        {
+            key: '8',
+            title: 'Action',
+            // dataIndex: "Action",
+            align: 'center',
+            render: (obj) => {
+                // console.log('obj.id',obj)
+                return (
+                    <Space size={8}>
+                        <Button type='ghost' icon={<EditTwoTone />} onClick={() => editRecod(obj)} />
+                        <Button type='ghost' icon={<DeleteTwoTone />} onClick={() => deleteRecord(obj.id)} />
+                    </Space>
+                );
+            },
+        }
+    ]
+
+    const checkBoxSelect = () => {
+        // console.log('checkedBox', checkedBox)
+        setCheckedBox(checkData)
+        setToggleSetting(false)
+    }
+
+
+    return (
+        <>
+
+            <Drawer placement="right" title="Setting" closable={false} onClose={() => setToggleSetting(false)} open={toggleSetting}
+                extra={
+                    <Button icon={<CloseOutlined />} style={{ borderRadius: '50px' }} onClick={() => setToggleSetting(false)} />
+                }
+            >
+                {/* <Button>Click</Button> */}
+                <div >
+                    <Checkbox.Group defaultValue={checkedBox} onChange={onChange} >
+                        <Row>
+                            <Col span={16}>
+                                <Checkbox value='id' style={{ marginBottom: '5px' }}>ID</Checkbox>
+                            </Col>
+                            <Col span={16}>
+                                <Checkbox value='productName' style={{ marginBottom: '5px' }}>PRODUCT NAME</Checkbox>
+                            </Col>
+                            <Col span={16}>
+                                <Checkbox value='Description' style={{ marginBottom: '5px' }}>DESCRIPTION</Checkbox>
+                            </Col>
+                            <Col span={16}>
+                                <Checkbox value='upload' style={{ marginBottom: '5px' }}>PRODUCT IMAGE</Checkbox>
+                            </Col>
+                            <Col span={16}>
+                                <Checkbox value='Price' style={{ marginBottom: '5px' }}>PRICE</Checkbox>
+                            </Col>
+                            <Col span={16}>
+                                <Checkbox value='Discount' style={{ marginBottom: '5px' }}>DISCOUNT</Checkbox>
+                            </Col>
+                            <Col span={16}>
+                                <Checkbox value='stats' style={{ marginBottom: '5px' }}>AVAILABLE</Checkbox>
+                            </Col>
+                        </Row>
+                    </Checkbox.Group>
+                </div>
+                <div style={{ marginTop: '100px' }}>
+                    <Space size={30} style={{ display: 'flex', justifyContent: 'center' }}>
+                        <Button type='default' style={{ width: '100px' }} onClick={() => setToggleSetting(false)} >Cancel</Button>
+                        <Button type='primary' style={{ width: '100px' }} onClick={checkBoxSelect}>Save</Button>
+                    </Space>
+                </div>
+            </Drawer>
+
+
+
+            <div style={{
+                padding: '30px 60px'
+            }}>
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '20px',
+                    backgroundColor: '#fff',
+                    padding: '15px 20px'
+                }}>
+                    <div>
+                        <h2>{recordList.length} Product</h2>
+                    </div>
+                    <div style={{
+                        display: 'flex'
+                    }}>
+                        <Input
+                            placeholder='Search'
+                            prefix={<SearchOutlined />}
+                            onChange={e => {
+                                setVal(e.target.value);
+                            }}
+
+                            style={{ width: '100%', marginRight: '20px' }}
+
+                        />
+                        <Button type='default' icon={<PrinterOutlined />} style={{ marginLeft: '10px', padding: '0px 8px' }} />
+                        <Button type='default' icon={<SettingOutlined />} onClick={settingToggle} style={{ marginLeft: '10px', padding: '0px 8px' }} />
+                        <Button type='primary' icon={<PlusOutlined />} onClick={toggleFormClick} style={{ marginLeft: '10px', padding: '0px 8px' }} />
+                        <Drawer placement="right" onClose={() => setToggleForm(false)} open={toggleForm}>
+                            <Formres editData={editData} setStats={setStats} 
+                            setImageUrl={setImageUrl} imageUrl={imageUrl}
+                            setToggleForm={setToggleForm} editToggle={editToggle} />
+                        </Drawer>
+
+                    </div>
+                </div>
+                <div style={{ backgroundColor: '#fff', padding: '15px 10px' }}>
+                    {/* <table style={{ width: '100%', borderSpacing: '0 20px', fontSize: '15px' }}>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Product Name</th>
+                                <th>Description</th>
+                                <th>Product Image</th>
+                                <th>Price</th>
+                                <th>Discount</th>
+                                <th>Available</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody style={{ textAlign: 'center' }}>
+                            {
+                                recordList.filter(entry =>
+                                    entry.productName.includes(val)
+                                ).map((ele, i) => {
+                                    return (
+                                        <tr key={i}>
+                                            <td>{i + 1}</td>
+                                            <td>{ele.productName}</td>
+                                            <td>{ele.Description}</td>
+                                            <td> <img src={ele.upload.file.thumbUrl} alt='Img' style={{
+                                                width: '40px', height: '40px', borderRadius: '50%'
+                                            }} /></td>
+                                            <td>&#x20B9; {ele.Price}</td>
+                                            <td>{ele.Discount} %</td>
+                                            <td>{ele.stats === 'avaible'
+                                                ? <svg color='#008000b5' xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" className="bi bi-record-fill" viewBox="0 0 16 16">
+                                                    <path fillRule="evenodd" d="M8 13A5 5 0 1 0 8 3a5 5 0 0 0 0 10z" /></svg>
+                                                : <svg color='rgb(255 95 95)' xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" className="bi bi-record-fill" viewBox="0 0 16 16">
+                                                    <path fillRule="evenodd" d="M8 13A5 5 0 1 0 8 3a5 5 0 0 0 0 10z" /></svg>}</td>
+                                            <td>
+                                                <Button type='ghost' icon={<EditTwoTone />} onClick={() => editRecod(ele)} />
+                                                <Button type='ghost' icon={<DeleteTwoTone />} onClick={() => deleteRecord(ele.id)} />
+                                            </td>
+                                        </tr>
+                                    )
+                                })
+                            }
+                        </tbody>
+                    </table> */}
+
+                    <Table
+                        rowKey={obj => obj.id}
+                        columns={
+                            columns.filter((ele) => {
+                                return checkedBox.includes(ele.dataIndex) || ele.title === 'Action' ? true : null
+                            })
+                        }
+                        // columns={columns}
+                        dataSource={
+                            recordList.filter(entry =>
+                                entry.productName.toLowerCase().includes(val.toLowerCase() || val.toUpperCase())
+                            )
+                        }
+                        scroll={{ x: '100%', }}
+                    />
+                </div>
+            </div>
+        </>
+    )
+}
+
+export default ProductList
+
+//-------------------( style.css )--------------------------------
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.ant-checkbox .ant-checkbox-inner {
+    border-radius: 50px;
+    width: 20px;
+    height: 20px;
+}
+
+
+.ant-checkbox-checked .ant-checkbox-inner {
+    background-color: #008000b5;
+    border-color: #008000b5;
+}
+
+.ant-drawer .ant-drawer-title{
+    font-size: 20px;
+}
